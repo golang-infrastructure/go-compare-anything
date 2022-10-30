@@ -2,26 +2,90 @@ package compare_anything
 
 import (
 	"math"
+	"reflect"
 	"strings"
 )
 
+// ------------------------------------------------ ---------------------------------------------------------------------
+
+// Comparator 比较器的接口定义，一个类型要想参与比较必须先实现比较器
 type Comparator[T any] func(a T, b T) int
 
+// ------------------------------------------------ ---------------------------------------------------------------------
+
+func OrderedComparator[T Ordered]() Comparator[T] {
+	return func(a T, b T) int {
+		if a == b {
+			return 0
+		} else if a < b {
+			return -1
+		} else {
+			return +1
+		}
+	}
+}
+
+// ------------------------------------------------ ---------------------------------------------------------------------
+
+// ReverseComparator 将比较结果按原点取反以达到逆序的效果
+func ReverseComparator[T any](comparator Comparator[T]) Comparator[T] {
+	return func(a T, b T) int {
+		return comparator(a, b) * -1
+	}
+}
+
+// ------------------------------------------------ ---------------------------------------------------------------------
+
+// StringComparator 比较字符串
 func StringComparator() Comparator[string] {
 	return strings.Compare
 }
 
+// ------------------------------------------------ ---------------------------------------------------------------------
+
 func IntComparator() Comparator[int] {
-	return func(a int, b int) int {
-		return a - b
-	}
+	return OrderedComparator[int]()
 }
 
-func UIntComparator() Comparator[uint] {
-	return func(a uint, b uint) int {
-		return int(a) - int(b)
-	}
+func Int8Comparator() Comparator[int8] {
+	return OrderedComparator[int8]()
 }
+
+func Int16Comparator() Comparator[int16] {
+	return OrderedComparator[int16]()
+}
+
+func Int32Comparator() Comparator[int32] {
+	return OrderedComparator[int32]()
+}
+
+func Int64Comparator() Comparator[int64] {
+	return OrderedComparator[int64]()
+}
+
+// ------------------------------------------------ ---------------------------------------------------------------------
+
+func UIntComparator() Comparator[uint] {
+	return OrderedComparator[uint]()
+}
+
+func UInt8Comparator() Comparator[uint8] {
+	return OrderedComparator[uint8]()
+}
+
+func UInt16Comparator() Comparator[uint16] {
+	return OrderedComparator[uint16]()
+}
+
+func UInt32Comparator() Comparator[uint32] {
+	return OrderedComparator[uint32]()
+}
+
+func UInt64Comparator() Comparator[uint64] {
+	return OrderedComparator[uint64]()
+}
+
+// ------------------------------------------------ ---------------------------------------------------------------------
 
 func Float64Comparator() Comparator[float64] {
 	return func(a float64, b float64) int {
@@ -46,3 +110,67 @@ func Float32Comparator() Comparator[float32] {
 		}
 	}
 }
+
+// ------------------------------------------------ ---------------------------------------------------------------------
+
+// BoolComparator 布尔类型的比较器，默认是让false排在前面
+func BoolComparator() Comparator[bool] {
+	return func(a bool, b bool) int {
+		if a == b {
+			return 0
+		} else if !a && b {
+			return -1
+		} else {
+			return 1
+		}
+	}
+}
+
+// ------------------------------------------------ ---------------------------------------------------------------------
+
+func ArrayComparator[T any]() Comparator[[]T] {
+	return func(a []T, b []T) int {
+		for index := 0; ; index++ {
+			if index >= len(a) {
+
+			}
+		}
+		// 对应位置先没元素的认为更小
+
+		// 如果都有元素的话，则看元素的值
+
+	}
+}
+
+// ------------------------------------------------ ---------------------------------------------------------------------
+
+func SliceComparator[T any]() Comparator[T] {
+	return func(a T, b T) int {
+
+		// a和b都是切片，通过反射来获取它们的值
+		reflectA := reflect.ValueOf(a)
+		reflectB := reflect.ValueOf(b)
+		if !reflectA.IsValid() && reflectB.IsValid() {
+			return 0
+		} else if !reflectA.IsValid() {
+			return -1
+		} else if !reflectB.IsValid() {
+			return 1
+		}
+
+		// 两个切片都是可用的，那就开始挨个比较吧
+		//for index := 0; ; index++ {
+		//	valueA := reflectA.Index(index)
+		//	kind, err := GenComparatorFromKind(valueA.Kind())
+		//
+		//}
+
+		// 对应位置先没元素的认为更小
+
+		// 如果都有元素的话，则看元素的值，为元素生成比较器来比较
+
+		return 0
+	}
+}
+
+// ------------------------------------------------ ---------------------------------------------------------------------
