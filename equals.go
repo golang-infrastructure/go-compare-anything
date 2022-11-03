@@ -2,6 +2,8 @@ package compare_anything
 
 import "reflect"
 
+type EqualFunc[T any] func(a, b T) bool
+
 func CompareTo() {
 
 }
