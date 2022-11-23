@@ -1,3 +1,3 @@
-module github.com/CC11001100/go-compare-anything
+module github.com/golang-infrastructure/go-compare-anything
 
-go 1.19
+go 1.18
