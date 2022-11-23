@@ -2,8 +2,8 @@ package compare_anything
 
 import "reflect"
 
-func CompareTo() {
-
+type Equalsable[T any] interface {
+	Equals(other T) bool
 }
 
 // Equals 值和类型都要相等
@@ -11,25 +11,31 @@ func Equals(a, b any) bool {
 	return false
 }
 
-func DeepEqual(x, y any) bool {
-	//if x == nil || y == nil {
-	//	return x == y
-	//}
-	//v1 := ValueOf(x)
-	//v2 := ValueOf(y)
-	//if v1.Type() != v2.Type() {
+// IsEqualsable 判断值是否是可比较的
+func IsEqualsable(value any) bool {
+	//reflectValue := reflect.ValueOf(value)
+	//if !reflectValue.CanInterface() {
 	//	return false
 	//}
-	//return deepValueEqual(v1, v2, make(map[visit]bool))
-	return reflect.DeepEqual(x, y)
+	//reflectValue.Interface().(Equalsable)
+	return false
 }
 
-// TypeEquals 类型是否匹配
-func TypeEquals() {
-
+func DeepEqual(a, b any) bool {
+	return reflect.DeepEqual(a, b)
 }
 
-// ValueEquals 值是否匹配
-func ValueEquals() {
+// TypeEquals 比较两个值的类型是否匹配
+func TypeEquals(a, b any) bool {
+	return false
+}
 
+// ValueEquals 比较两个值是否匹配
+func ValueEquals(a, b any) bool {
+	reflectValueA := reflect.ValueOf(a)
+	reflectValueB := reflect.ValueOf(b)
+	if !reflectValueA.IsValid() {
+		return reflectValueA.IsValid() == reflectValueB.IsValid()
+	}
+	return DeepEqual(reflectValueA.Interface(), reflectValueB.Interface())
 }
