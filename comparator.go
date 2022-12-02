@@ -1,6 +1,7 @@
 package compare_anything
 
 import (
+	"github.com/golang-infrastructure/go-gtypes"
 	"math"
 	"reflect"
 	"strings"
@@ -13,7 +14,7 @@ type Comparator[T any] func(a T, b T) int
 
 // ------------------------------------------------ ---------------------------------------------------------------------
 
-func OrderedComparator[T Ordered]() Comparator[T] {
+func OrderedComparator[T gtypes.Ordered]() Comparator[T] {
 	return func(a T, b T) int {
 		if a == b {
 			return 0
