@@ -3,19 +3,19 @@ package compare_anything
 import (
 	"github.com/golang-infrastructure/go-gtypes"
 	"math"
-	"reflect"
 	"strings"
 )
 
 // ------------------------------------------------ ---------------------------------------------------------------------
 
 // Comparator 比较器的接口定义，一个类型要想参与比较必须先实现比较器
-type Comparator[T any] func(a T, b T) int
+type Comparator[T any] func(a, b T) int
 
 // ------------------------------------------------ ---------------------------------------------------------------------
 
+// OrderedComparator 为支持排序的类型生成比较器
 func OrderedComparator[T gtypes.Ordered]() Comparator[T] {
-	return func(a T, b T) int {
+	return func(a, b T) int {
 		if a == b {
 			return 0
 		} else if a < b {
@@ -26,11 +26,47 @@ func OrderedComparator[T gtypes.Ordered]() Comparator[T] {
 	}
 }
 
+// ReverseOrderedComparator 对可比较类型逆序比较的比较器，会把较大的放在前面
+func ReverseOrderedComparator[T gtypes.Ordered]() Comparator[T] {
+	return ReverseComparator[T](OrderedComparator[T]())
+}
+
+// ------------------------------------------------ ---------------------------------------------------------------------
+
+// OrderedPointerComparator 为支持排序的类型生成比较器
+func OrderedPointerComparator[T *gtypes.Ordered]() Comparator[T] {
+	return func(a, b T) int {
+		// 1. 先比较指针
+		if a == nil && b != nil {
+			return -1
+		} else if a != nil && b == nil {
+			return 1
+		} else if a == nil && b == nil {
+			return 0
+		}
+		// 2. 再比较实际的值
+		aValue := *a
+		bValue := *b
+		if aValue == bValue {
+			return 0
+		} else if aValue < bValue {
+			return -1
+		} else {
+			return +1
+		}
+	}
+}
+
+// ReverseOrderedPointerComparator 对可比较类型逆序比较的比较器，会把较大的放在前面
+func ReverseOrderedPointerComparator[T *gtypes.Ordered]() Comparator[T] {
+	return ReverseComparator[T](OrderedPointerComparator[T]())
+}
+
 // ------------------------------------------------ ---------------------------------------------------------------------
 
 // ReverseComparator 将比较结果按原点取反以达到逆序的效果
 func ReverseComparator[T any](comparator Comparator[T]) Comparator[T] {
-	return func(a T, b T) int {
+	return func(a, b T) int {
 		return comparator(a, b) * -1
 	}
 }
@@ -129,49 +165,49 @@ func BoolComparator() Comparator[bool] {
 
 // ------------------------------------------------ ---------------------------------------------------------------------
 
-func ArrayComparator[T any]() Comparator[[]T] {
-	return func(a []T, b []T) int {
-		for index := 0; ; index++ {
-			if index >= len(a) {
-
-			}
-		}
-		// 对应位置先没元素的认为更小
-
-		// 如果都有元素的话，则看元素的值
-
-	}
-}
+//// OrderedArrayComparator 承载可比较元素的数组或切片使用的比较器
+//func OrderedArrayComparator[T gtypes.Ordered]() Comparator[[]T] {
+//	return func(a, b []T) int {
+//		for index := 0; ; index++ {
+//			// 对应位置先没元素的认为更小
+//
+//			// 如果都有元素的话，则看元素的值
+//			if index >= len(a) {
+//
+//			}
+//		}
+//	}
+//}
 
 // ------------------------------------------------ ---------------------------------------------------------------------
 
-func SliceComparator[T any]() Comparator[T] {
-	return func(a T, b T) int {
-
-		// a和b都是切片，通过反射来获取它们的值
-		reflectA := reflect.ValueOf(a)
-		reflectB := reflect.ValueOf(b)
-		if !reflectA.IsValid() && reflectB.IsValid() {
-			return 0
-		} else if !reflectA.IsValid() {
-			return -1
-		} else if !reflectB.IsValid() {
-			return 1
-		}
-
-		// 两个切片都是可用的，那就开始挨个比较吧
-		//for index := 0; ; index++ {
-		//	valueA := reflectA.Index(index)
-		//	kind, err := GenComparatorFromKind(valueA.Kind())
-		//
-		//}
-
-		// 对应位置先没元素的认为更小
-
-		// 如果都有元素的话，则看元素的值，为元素生成比较器来比较
-
-		return 0
-	}
-}
+//func SliceComparator[T any]() Comparator[T] {
+//	return func(a T, b T) int {
+//
+//		// a和b都是切片，通过反射来获取它们的值
+//		reflectA := reflect.ValueOf(a)
+//		reflectB := reflect.ValueOf(b)
+//		if !reflectA.IsValid() && reflectB.IsValid() {
+//			return 0
+//		} else if !reflectA.IsValid() {
+//			return -1
+//		} else if !reflectB.IsValid() {
+//			return 1
+//		}
+//
+//		// 两个切片都是可用的，那就开始挨个比较吧
+//		//for index := 0; ; index++ {
+//		//	valueA := reflectA.Index(index)
+//		//	kind, err := GenComparatorFromKind(valueA.Kind())
+//		//
+//		//}
+//
+//		// 对应位置先没元素的认为更小
+//
+//		// 如果都有元素的话，则看元素的值，为元素生成比较器来比较
+//
+//		return 0
+//	}
+//}
 
 // ------------------------------------------------ ---------------------------------------------------------------------
