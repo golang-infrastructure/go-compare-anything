@@ -3,29 +3,29 @@ package compare_anything
 import "reflect"
 
 // Comparable 表示是可比较的
-type Comparable interface {
+type Comparable[T any] interface {
 
 	// CompareTo 用来做比较的方法
-	CompareTo(target any) int
+	CompareTo(target T) int
 }
 
 // IsComparable 判断是否是可比较类型
-func IsComparable(v any) bool {
+func IsComparable[T any](v T) bool {
 	reflectValue := reflect.ValueOf(v)
 	if !reflectValue.CanInterface() {
 		return false
 	}
-	_, ok := reflectValue.Interface().(Comparable)
+	_, ok := reflectValue.Interface().(Comparable[T])
 	return ok
 }
 
 // CastToComparable 把给定的值转为Comparable接口类型，如果无法转换则会返回error
-func CastToComparable(value any) (Comparable, error) {
+func CastToComparable[T any](value T) (Comparable[T], error) {
 	reflectValue := reflect.ValueOf(value)
 	if !reflectValue.CanInterface() {
 		return nil, ErrCastFailed
 	}
-	v, ok := reflectValue.Interface().(Comparable)
+	v, ok := reflectValue.Interface().(Comparable[T])
 	if !ok {
 		return nil, ErrCastFailed
 	}
