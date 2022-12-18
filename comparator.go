@@ -3,7 +3,9 @@ package compare_anything
 import (
 	"github.com/golang-infrastructure/go-gtypes"
 	"math"
+	"reflect"
 	"strings"
+	"unsafe"
 )
 
 // ------------------------------------------------ ---------------------------------------------------------------------
@@ -165,49 +167,177 @@ func BoolComparator() Comparator[bool] {
 
 // ------------------------------------------------ ---------------------------------------------------------------------
 
-//// OrderedArrayComparator 承载可比较元素的数组或切片使用的比较器
-//func OrderedArrayComparator[T gtypes.Ordered]() Comparator[[]T] {
-//	return func(a, b []T) int {
-//		for index := 0; ; index++ {
-//			// 对应位置先没元素的认为更小
-//
-//			// 如果都有元素的话，则看元素的值
-//			if index >= len(a) {
-//
-//			}
-//		}
-//	}
-//}
+// OrderedSliceComparator 承载可比较元素的数组或切片使用的比较器
+func OrderedSliceComparator[T gtypes.Ordered]() Comparator[[]T] {
+	return func(sliceA, sliceB []T) int {
+		for index := 0; ; index++ {
+
+			// 如果有任意一个消费到尾部了，则对应位置先没元素的认为更小
+			if index >= len(sliceA) || index >= len(sliceB) {
+				return len(sliceA) - len(sliceB)
+			}
+
+			// 如果都有元素的话，则比较对应位置的元素的值，因为是可比较元素，因此直接比较就好了
+			if sliceA[index] == sliceB[index] {
+				continue
+			} else if sliceA[index] > sliceB[index] {
+				return 1
+			} else {
+				return -1
+			}
+		}
+	}
+}
+
+// SliceComparator 用于比较两个切片的大小
+func SliceComparator[T any]() Comparator[[]T] {
+	return func(sliceA, sliceB []T) int {
+		for index := 0; ; index++ {
+			// 如果有任意一个消费到尾部了，则对应位置先没元素的认为更小
+			if index >= len(sliceA) || index >= len(sliceB) {
+				return len(sliceA) - len(sliceB)
+			}
+
+			// 如果都有元素的话，则比较对应位置的元素的值，因为是不可以直接比较的元素，因此根据元素类型自动比较
+			r, err := CompareE(sliceA[index], sliceB[index])
+			if err != nil {
+				continue
+			}
+			if r != 0 {
+				return r
+			}
+		}
+	}
+}
+
+// SliceComparator2 另一种用于比较两个切片的大小的算法
+func SliceComparator2[T any]() Comparator[[]T] {
+	return func(sliceA, sliceB []T) int {
+		// 先比较切片中的元素的个数，如果元素的个数不想等的话，谁持有的元素个数多久认为谁大
+		if len(sliceA) != len(sliceB) {
+			return len(sliceA) - len(sliceB)
+		}
+		for index := 0; index < len(sliceA); index++ {
+			// 如果都有元素的话，则比较对应位置的元素的值，因为是不可以直接比较的元素，因此根据元素类型自动比较
+			r, err := CompareE(sliceA[index], sliceB[index])
+			if err != nil {
+				continue
+			}
+			if r != 0 {
+				return r
+			}
+		}
+		// 如果比较完了所有元素还没有结果，则认为是相等的
+		return 0
+	}
+}
 
 // ------------------------------------------------ ---------------------------------------------------------------------
 
-//func SliceComparator[T any]() Comparator[T] {
-//	return func(a T, b T) int {
-//
-//		// a和b都是切片，通过反射来获取它们的值
-//		reflectA := reflect.ValueOf(a)
-//		reflectB := reflect.ValueOf(b)
-//		if !reflectA.IsValid() && reflectB.IsValid() {
-//			return 0
-//		} else if !reflectA.IsValid() {
-//			return -1
-//		} else if !reflectB.IsValid() {
-//			return 1
-//		}
-//
-//		// 两个切片都是可用的，那就开始挨个比较吧
-//		//for index := 0; ; index++ {
-//		//	valueA := reflectA.Index(index)
-//		//	kind, err := GenComparatorFromKind(valueA.Kind())
-//		//
-//		//}
-//
-//		// 对应位置先没元素的认为更小
-//
-//		// 如果都有元素的话，则看元素的值，为元素生成比较器来比较
-//
-//		return 0
-//	}
-//}
+// StructComparator 用于比较Struct大小的比较器
+func StructComparator[T any]() Comparator[T] {
+	return func(a, b T) int {
+		// 依此比较struct中的每个field的大小
+		// TODO 优先比较Ordered的类型，然后再比较其他类型
+		reflectValueA := reflect.ValueOf(a)
+		reflectValueB := reflect.ValueOf(b)
+		for i := 0; i < reflectValueA.NumField(); i++ {
+			fieldValueA := reflectValueA.Field(i).Interface()
+			fieldValueB := reflectValueB.Field(i).Interface()
+			r, err := CompareE(fieldValueA, fieldValueB)
+			if err != nil {
+				continue
+			}
+			if r != 0 {
+				return r
+			}
+		}
+		// 如果都比较了还不能区分大小，则只好认为是相等了
+		return 0
+	}
+}
+
+// ------------------------------------------------ ---------------------------------------------------------------------
+
+// MapComparator 用于比较Map大小
+func MapComparator[K comparable, V any]() Comparator[map[K]V] {
+	return func(mapA, mapB map[K]V) int {
+
+		// 谁持有的元素数量多则认为谁大
+		lenA := len(mapA)
+		lenB := len(mapB)
+		if lenA != lenB {
+			return lenA - lenB
+		}
+
+		// 如果元素个数一样多，则依此比较键值对
+
+	}
+}
+
+// ------------------------------------------------ ---------------------------------------------------------------------
+
+// ChanComparator 用于比较两个channel的大小
+func ChanComparator[T any]() Comparator[chan T] {
+	return func(channelA, channelB chan T) int {
+
+		// 谁持有的元素个数多则认为谁大
+		lenA := len(channelA)
+		lenB := len(channelB)
+		if lenA != lenB {
+			return lenA - lenB
+		}
+
+	}
+}
+
+// ------------------------------------------------ ---------------------------------------------------------------------
+
+func FuncComparator() {
+
+}
+
+// ------------------------------------------------ ---------------------------------------------------------------------
+
+// InterfaceComparator 其类型为interface，则看起实际指向的值了
+func InterfaceComparator() {
+
+}
+
+// ------------------------------------------------ ---------------------------------------------------------------------
+
+// PtrComparator 比较指针类型
+func PtrComparator[T any]() Comparator[*T] {
+	return func(a, b *T) int {
+		// 先比较指针，比较指针类型的话就是nil为小，都为nil则相等
+		if a == nil && b != nil {
+			return -1
+		} else if a != nil && b == nil {
+			return 1
+		} else if a == nil && b == nil {
+			return 0
+		}
+		// 都不为nil的话则再比较其指向的内容的大小了
+		return Compare(*a, *b)
+	}
+}
+
+// ------------------------------------------------ ---------------------------------------------------------------------
+
+// UnsafePointerComparator 用于比较unsafe类型
+func UnsafePointerComparator() Comparator[unsafe.Pointer] {
+	return func(a, b unsafe.Pointer) int {
+		// 先比较指针，比较指针类型的话就是nil为小，都为nil则相等
+		if a == nil && b != nil {
+			return -1
+		} else if a != nil && b == nil {
+			return 1
+		} else if a == nil && b == nil {
+			return 0
+		}
+		// 如果都不为nil的话，则直接比较其地址大小
+		return int(*a - *b)
+	}
+}
 
 // ------------------------------------------------ ---------------------------------------------------------------------
