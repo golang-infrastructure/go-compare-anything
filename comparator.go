@@ -25,51 +25,51 @@ func OrderedComparator[T gtypes.Ordered]() Comparator[T] {
 		}
 	}
 }
+//
+//// ReverseOrderedComparator 对可比较类型逆序比较的比较器，会把较大的放在前面
+//func ReverseOrderedComparator[T gtypes.Ordered]() Comparator[T] {
+//	return ReverseComparator[T](OrderedComparator[T]())
+//}
 
-// ReverseOrderedComparator 对可比较类型逆序比较的比较器，会把较大的放在前面
-func ReverseOrderedComparator[T gtypes.Ordered]() Comparator[T] {
-	return ReverseComparator[T](OrderedComparator[T]())
-}
+// ------------------------------------------------ ---------------------------------------------------------------------
+//
+//// OrderedPointerComparator 为支持排序的类型生成比较器
+//func OrderedPointerComparator[T *gtypes.Ordered]() Comparator[T] {
+//	return func(a, b T) int {
+//		// 1. 先比较指针
+//		if a == nil && b != nil {
+//			return -1
+//		} else if a != nil && b == nil {
+//			return 1
+//		} else if a == nil && b == nil {
+//			return 0
+//		}
+//		// 2. 再比较实际的值
+//		aValue := *a
+//		bValue := *b
+//		if aValue == bValue {
+//			return 0
+//		} else if aValue < bValue {
+//			return -1
+//		} else {
+//			return +1
+//		}
+//	}
+//}
+//
+//// ReverseOrderedPointerComparator 对可比较类型逆序比较的比较器，会把较大的放在前面
+//func ReverseOrderedPointerComparator[T *gtypes.Ordered]() Comparator[T] {
+//	return ReverseComparator[T](OrderedPointerComparator[T]())
+//}
 
 // ------------------------------------------------ ---------------------------------------------------------------------
 
-// OrderedPointerComparator 为支持排序的类型生成比较器
-func OrderedPointerComparator[T *gtypes.Ordered]() Comparator[T] {
-	return func(a, b T) int {
-		// 1. 先比较指针
-		if a == nil && b != nil {
-			return -1
-		} else if a != nil && b == nil {
-			return 1
-		} else if a == nil && b == nil {
-			return 0
-		}
-		// 2. 再比较实际的值
-		aValue := *a
-		bValue := *b
-		if aValue == bValue {
-			return 0
-		} else if aValue < bValue {
-			return -1
-		} else {
-			return +1
-		}
-	}
-}
-
-// ReverseOrderedPointerComparator 对可比较类型逆序比较的比较器，会把较大的放在前面
-func ReverseOrderedPointerComparator[T *gtypes.Ordered]() Comparator[T] {
-	return ReverseComparator[T](OrderedPointerComparator[T]())
-}
-
-// ------------------------------------------------ ---------------------------------------------------------------------
-
-// ReverseComparator 将比较结果按原点取反以达到逆序的效果
-func ReverseComparator[T any](comparator Comparator[T]) Comparator[T] {
-	return func(a, b T) int {
-		return comparator(a, b) * -1
-	}
-}
+//// ReverseComparator 将比较结果按原点取反以达到逆序的效果
+//func ReverseComparator[T any](comparator Comparator[T]) Comparator[T] {
+//	return func(a, b T) int {
+//		return comparator(a, b) * -1
+//	}
+//}
 
 // ------------------------------------------------ ---------------------------------------------------------------------
 
